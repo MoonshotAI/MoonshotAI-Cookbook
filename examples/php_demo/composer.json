@@ -1,0 +1,12 @@
+{
+  "require": {
+    "ext-json": "*",
+    "webman/openai": "^1.0"
+  },
+  "repositories": {
+    "packagist": {
+      "type": "composer",
+      "url": "https://mirrors.aliyun.com/composer/"
+    }
+  }
+}

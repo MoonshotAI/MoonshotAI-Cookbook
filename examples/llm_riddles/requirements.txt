@@ -1,0 +1,4 @@
+openai==1.2.2
+gradio==3.39.0
+pillow
+sympy
