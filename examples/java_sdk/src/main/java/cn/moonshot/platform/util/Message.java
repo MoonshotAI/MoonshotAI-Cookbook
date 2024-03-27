@@ -6,7 +6,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+@Builder
 public class Message {
 
     private String role;
