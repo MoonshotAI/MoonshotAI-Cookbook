@@ -18,13 +18,13 @@ var (
 )
 
 type moonshot struct {
-	host   string
-	key    string
-	client *http.Client
-	log    func(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration)
+	baseUrl string
+	key     string
+	client  *http.Client
+	log     func(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration)
 }
 
-func (m moonshot) BaseUrl() string      { return m.host }
+func (m moonshot) BaseUrl() string      { return m.baseUrl }
 func (m moonshot) Key() string          { return m.key }
 func (m moonshot) Client() *http.Client { return m.client }
 
@@ -36,9 +36,9 @@ func runDemo() error {
 	ctx := context.Background()
 
 	client := NewClient[moonshot](moonshot{
-		host:   "https://api.moonshot.cn/v1",
-		key:    os.Getenv("MOONSHOT_API_KEY"),
-		client: http.DefaultClient,
+		baseUrl: "https://api.moonshot.cn/v1",
+		key:     os.Getenv("MOONSHOT_API_KEY"),
+		client:  http.DefaultClient,
 		log: func(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration) {
 			log.Printf("[%s] %s %s", caller, request.URL, elapse)
 		},
