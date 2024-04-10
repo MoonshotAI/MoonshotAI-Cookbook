@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/shopsprint/decimal"
 	"strconv"
 	"strings"
 )
@@ -27,6 +28,20 @@ type Models struct {
 		Permission []json.RawMessage `json:"permission"`
 	} `json:"data"`
 	Object string `json:"object"`
+}
+
+type EstimateTokenCount struct {
+	Data struct {
+		TotalTokens int `json:"total_tokens"`
+	} `json:"data"`
+}
+
+type Balance struct {
+	Data struct {
+		AvailableBalance decimal.Decimal `json:"available_balance"`
+		VoucherBalance   decimal.Decimal `json:"voucher_balance"`
+		CashBalance      decimal.Decimal `json:"cash_balance"`
+	} `json:"data"`
 }
 
 type Message struct {

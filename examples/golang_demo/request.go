@@ -42,6 +42,19 @@ func (r *ChatCompletionStreamRequest) ToJSON() (string, error) {
 	})
 }
 
+type EstimateTokenCountRequest ChatCompletionRequest
+
+func (r *EstimateTokenCountRequest) ToJSON() (string, error) {
+	type EstimateTokenCountRequestWrapper struct {
+		Model    string     `json:"model"`
+		Messages []*Message `json:"messages"`
+	}
+	return toJSON(&EstimateTokenCountRequestWrapper{
+		Model:    r.Model,
+		Messages: r.Messages,
+	})
+}
+
 func toJSON(obj any) (string, error) {
 	bytes, err := json.MarshalIndent(obj, "", "    ")
 	if err != nil {
