@@ -19,11 +19,21 @@ type CustomHTTPClient interface {
 	Client() *http.Client
 }
 
-//go:generate go run -mod=mod "github.com/x5iu/defc" --mode=api --output=client.gen.go --features=api/nort,api/logx,api/error,api/future,api/client
+//go:generate go run -mod=mod github.com/x5iu/defc generate --features=api/nort,api/logx,api/error,api/future,api/client
 type Client[C Caller] interface {
 	// ListModels GET {{ $.Client.BaseUrl }}/models
 	// Authorization: Bearer {{ $.Client.Key }}
 	ListModels(ctx context.Context) (*Models, error)
+
+	// EstimateTokenCount POST {{ $.Client.BaseUrl }}/tokenizers/estimate-token-count
+	// Authorization: Bearer {{ $.Client.Key }}
+	//
+	// {{ $.request.ToJSON }}
+	EstimateTokenCount(ctx context.Context, request *EstimateTokenCountRequest) (*EstimateTokenCount, error)
+
+	// CheckBalance GET {{ $.Client.BaseUrl }}/users/me/balance
+	// Authorization: Bearer {{ $.Client.Key }}
+	CheckBalance(ctx context.Context) (*Balance, error)
 
 	// CreateChatCompletion POST {{ $.Client.BaseUrl }}/chat/completions
 	// Content-Type: application/json

@@ -31,6 +31,7 @@ func (r *ResponseHandler) ScanValues(values ...any) (err error) {
 	case *Stream:
 		if r.Caller == CallerCreateChatCompletionStream {
 			if !isContentType(r.Response.Header, httpContentTypeSSE) {
+				r.Response.Body.Close()
 				return ErrNotEventStream
 			}
 			ch := make(chan *Chunk)

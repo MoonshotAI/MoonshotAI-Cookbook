@@ -29,6 +29,20 @@ type Models struct {
 	Object string `json:"object"`
 }
 
+type EstimateTokenCount struct {
+	Data struct {
+		TotalTokens int `json:"total_tokens"`
+	} `json:"data"`
+}
+
+type Balance struct {
+	Data struct {
+		AvailableBalance float64 `json:"available_balance"`
+		VoucherBalance   float64 `json:"voucher_balance"`
+		CashBalance      float64 `json:"cash_balance"`
+	} `json:"data"`
+}
+
 type Message struct {
 	Role       string      `json:"role"`
 	Content    *Content    `json:"content,omitempty"`

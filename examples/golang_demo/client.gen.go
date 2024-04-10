@@ -18,6 +18,8 @@ import (
 
 const (
 	CallerListModels                 = "ListModels"
+	CallerEstimateTokenCount         = "EstimateTokenCount"
+	CallerCheckBalance               = "CheckBalance"
 	CallerCreateChatCompletion       = "CreateChatCompletion"
 	CallerCreateChatCompletionStream = "CreateChatCompletionStream"
 	CallerUploadFile                 = "UploadFile"
@@ -35,6 +37,10 @@ type implClient[C Caller] struct {
 var (
 	addrTmplListModels                   = template.Must(template.New("AddressListModels").Parse("{{ $.Client.BaseUrl }}/models"))
 	headerTmplListModels                 = template.Must(template.New("HeaderListModels").Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
+	addrTmplEstimateTokenCount           = template.Must(template.New("AddressEstimateTokenCount").Parse("{{ $.Client.BaseUrl }}/tokenizers/estimate-token-count"))
+	headerTmplEstimateTokenCount         = template.Must(template.New("HeaderEstimateTokenCount").Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n{{ $.request.ToJSON }}"))
+	addrTmplCheckBalance                 = template.Must(template.New("AddressCheckBalance").Parse("{{ $.Client.BaseUrl }}/users/me/balance"))
+	headerTmplCheckBalance               = template.Must(template.New("HeaderCheckBalance").Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
 	addrTmplCreateChatCompletion         = template.Must(template.New("AddressCreateChatCompletion").Parse("{{ $.Client.BaseUrl }}/chat/completions"))
 	headerTmplCreateChatCompletion       = template.Must(template.New("HeaderCreateChatCompletion").Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n{{ $.request.ToJSON }}"))
 	addrTmplCreateChatCompletionStream   = template.Must(template.New("AddressCreateChatCompletionStream").Parse("{{ $.Client.BaseUrl }}/chat/completions"))
@@ -132,6 +138,190 @@ func (__imp *implClient[C]) ListModels(ctx context.Context) (*Models, error) {
 	}
 
 	return v0ListModels, nil
+}
+
+func (__imp *implClient[C]) EstimateTokenCount(ctx context.Context, request *EstimateTokenCountRequest) (*EstimateTokenCount, error) {
+	var innerEstimateTokenCount any = __imp.Inner()
+
+	addrEstimateTokenCount := __ClientGetBuffer()
+	defer __ClientPutBuffer(addrEstimateTokenCount)
+	defer addrEstimateTokenCount.Reset()
+
+	headerEstimateTokenCount := __ClientGetBuffer()
+	defer __ClientPutBuffer(headerEstimateTokenCount)
+	defer headerEstimateTokenCount.Reset()
+
+	var (
+		v0EstimateTokenCount           = new(EstimateTokenCount)
+		errEstimateTokenCount          error
+		httpResponseEstimateTokenCount *http.Response
+		responseEstimateTokenCount     ClientResponseInterface = __imp.response()
+	)
+
+	if errEstimateTokenCount = addrTmplEstimateTokenCount.Execute(addrEstimateTokenCount, map[string]any{
+		"Client":  __imp.Inner(),
+		"ctx":     ctx,
+		"request": request,
+	}); errEstimateTokenCount != nil {
+		return v0EstimateTokenCount, fmt.Errorf("error building 'EstimateTokenCount' url: %w", errEstimateTokenCount)
+	}
+
+	if errEstimateTokenCount = headerTmplEstimateTokenCount.Execute(headerEstimateTokenCount, map[string]any{
+		"Client":  __imp.Inner(),
+		"ctx":     ctx,
+		"request": request,
+	}); errEstimateTokenCount != nil {
+		return v0EstimateTokenCount, fmt.Errorf("error building 'EstimateTokenCount' header: %w", errEstimateTokenCount)
+	}
+	bufReaderEstimateTokenCount := bufio.NewReader(headerEstimateTokenCount)
+	mimeHeaderEstimateTokenCount, errEstimateTokenCount := textproto.NewReader(bufReaderEstimateTokenCount).ReadMIMEHeader()
+	if errEstimateTokenCount != nil {
+		return v0EstimateTokenCount, fmt.Errorf("error reading 'EstimateTokenCount' header: %w", errEstimateTokenCount)
+	}
+
+	urlEstimateTokenCount := addrEstimateTokenCount.String()
+	requestBodyEstimateTokenCount, errEstimateTokenCount := io.ReadAll(bufReaderEstimateTokenCount)
+	if errEstimateTokenCount != nil {
+		return v0EstimateTokenCount, fmt.Errorf("error reading 'EstimateTokenCount' request body: %w", errEstimateTokenCount)
+	}
+	requestEstimateTokenCount, errEstimateTokenCount := http.NewRequestWithContext(ctx, "POST", urlEstimateTokenCount, bytes.NewReader(requestBodyEstimateTokenCount))
+	if errEstimateTokenCount != nil {
+		return v0EstimateTokenCount, fmt.Errorf("error building 'EstimateTokenCount' request: %w", errEstimateTokenCount)
+	}
+
+	for kEstimateTokenCount, vvEstimateTokenCount := range mimeHeaderEstimateTokenCount {
+		for _, vEstimateTokenCount := range vvEstimateTokenCount {
+			requestEstimateTokenCount.Header.Add(kEstimateTokenCount, vEstimateTokenCount)
+		}
+	}
+
+	startEstimateTokenCount := time.Now()
+
+	if httpClientEstimateTokenCount, okEstimateTokenCount := innerEstimateTokenCount.(interface{ Client() *http.Client }); okEstimateTokenCount {
+		httpResponseEstimateTokenCount, errEstimateTokenCount = httpClientEstimateTokenCount.Client().Do(requestEstimateTokenCount)
+	} else {
+		httpResponseEstimateTokenCount, errEstimateTokenCount = http.DefaultClient.Do(requestEstimateTokenCount)
+	}
+
+	if logEstimateTokenCount, okEstimateTokenCount := innerEstimateTokenCount.(interface {
+		Log(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration)
+	}); okEstimateTokenCount {
+		logEstimateTokenCount.Log(ctx, "EstimateTokenCount", requestEstimateTokenCount, httpResponseEstimateTokenCount, time.Since(startEstimateTokenCount))
+	}
+
+	if errEstimateTokenCount != nil {
+		return v0EstimateTokenCount, fmt.Errorf("error sending 'EstimateTokenCount' request: %w", errEstimateTokenCount)
+	}
+
+	if httpResponseEstimateTokenCount.StatusCode < 200 || httpResponseEstimateTokenCount.StatusCode > 299 {
+		return v0EstimateTokenCount, __ClientNewResponseError("EstimateTokenCount", httpResponseEstimateTokenCount)
+	}
+
+	if errEstimateTokenCount = responseEstimateTokenCount.FromResponse("EstimateTokenCount", httpResponseEstimateTokenCount); errEstimateTokenCount != nil {
+		return v0EstimateTokenCount, fmt.Errorf("error converting 'EstimateTokenCount' response: %w", errEstimateTokenCount)
+	}
+
+	addrEstimateTokenCount.Reset()
+	headerEstimateTokenCount.Reset()
+
+	if errEstimateTokenCount = responseEstimateTokenCount.Err(); errEstimateTokenCount != nil {
+		return v0EstimateTokenCount, fmt.Errorf("error returned from 'EstimateTokenCount' response: %w", errEstimateTokenCount)
+	}
+
+	if errEstimateTokenCount = responseEstimateTokenCount.ScanValues(v0EstimateTokenCount); errEstimateTokenCount != nil {
+		return v0EstimateTokenCount, fmt.Errorf("error scanning value from 'EstimateTokenCount' response: %w", errEstimateTokenCount)
+	}
+
+	return v0EstimateTokenCount, nil
+}
+
+func (__imp *implClient[C]) CheckBalance(ctx context.Context) (*Balance, error) {
+	var innerCheckBalance any = __imp.Inner()
+
+	addrCheckBalance := __ClientGetBuffer()
+	defer __ClientPutBuffer(addrCheckBalance)
+	defer addrCheckBalance.Reset()
+
+	headerCheckBalance := __ClientGetBuffer()
+	defer __ClientPutBuffer(headerCheckBalance)
+	defer headerCheckBalance.Reset()
+
+	var (
+		v0CheckBalance           = new(Balance)
+		errCheckBalance          error
+		httpResponseCheckBalance *http.Response
+		responseCheckBalance     ClientResponseInterface = __imp.response()
+	)
+
+	if errCheckBalance = addrTmplCheckBalance.Execute(addrCheckBalance, map[string]any{
+		"Client": __imp.Inner(),
+		"ctx":    ctx,
+	}); errCheckBalance != nil {
+		return v0CheckBalance, fmt.Errorf("error building 'CheckBalance' url: %w", errCheckBalance)
+	}
+
+	if errCheckBalance = headerTmplCheckBalance.Execute(headerCheckBalance, map[string]any{
+		"Client": __imp.Inner(),
+		"ctx":    ctx,
+	}); errCheckBalance != nil {
+		return v0CheckBalance, fmt.Errorf("error building 'CheckBalance' header: %w", errCheckBalance)
+	}
+	bufReaderCheckBalance := bufio.NewReader(headerCheckBalance)
+	mimeHeaderCheckBalance, errCheckBalance := textproto.NewReader(bufReaderCheckBalance).ReadMIMEHeader()
+	if errCheckBalance != nil {
+		return v0CheckBalance, fmt.Errorf("error reading 'CheckBalance' header: %w", errCheckBalance)
+	}
+
+	urlCheckBalance := addrCheckBalance.String()
+	requestCheckBalance, errCheckBalance := http.NewRequestWithContext(ctx, "GET", urlCheckBalance, http.NoBody)
+	if errCheckBalance != nil {
+		return v0CheckBalance, fmt.Errorf("error building 'CheckBalance' request: %w", errCheckBalance)
+	}
+
+	for kCheckBalance, vvCheckBalance := range mimeHeaderCheckBalance {
+		for _, vCheckBalance := range vvCheckBalance {
+			requestCheckBalance.Header.Add(kCheckBalance, vCheckBalance)
+		}
+	}
+
+	startCheckBalance := time.Now()
+
+	if httpClientCheckBalance, okCheckBalance := innerCheckBalance.(interface{ Client() *http.Client }); okCheckBalance {
+		httpResponseCheckBalance, errCheckBalance = httpClientCheckBalance.Client().Do(requestCheckBalance)
+	} else {
+		httpResponseCheckBalance, errCheckBalance = http.DefaultClient.Do(requestCheckBalance)
+	}
+
+	if logCheckBalance, okCheckBalance := innerCheckBalance.(interface {
+		Log(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration)
+	}); okCheckBalance {
+		logCheckBalance.Log(ctx, "CheckBalance", requestCheckBalance, httpResponseCheckBalance, time.Since(startCheckBalance))
+	}
+
+	if errCheckBalance != nil {
+		return v0CheckBalance, fmt.Errorf("error sending 'CheckBalance' request: %w", errCheckBalance)
+	}
+
+	if httpResponseCheckBalance.StatusCode < 200 || httpResponseCheckBalance.StatusCode > 299 {
+		return v0CheckBalance, __ClientNewResponseError("CheckBalance", httpResponseCheckBalance)
+	}
+
+	if errCheckBalance = responseCheckBalance.FromResponse("CheckBalance", httpResponseCheckBalance); errCheckBalance != nil {
+		return v0CheckBalance, fmt.Errorf("error converting 'CheckBalance' response: %w", errCheckBalance)
+	}
+
+	addrCheckBalance.Reset()
+	headerCheckBalance.Reset()
+
+	if errCheckBalance = responseCheckBalance.Err(); errCheckBalance != nil {
+		return v0CheckBalance, fmt.Errorf("error returned from 'CheckBalance' response: %w", errCheckBalance)
+	}
+
+	if errCheckBalance = responseCheckBalance.ScanValues(v0CheckBalance); errCheckBalance != nil {
+		return v0CheckBalance, fmt.Errorf("error scanning value from 'CheckBalance' response: %w", errCheckBalance)
+	}
+
+	return v0CheckBalance, nil
 }
 
 func (__imp *implClient[C]) CreateChatCompletion(ctx context.Context, request *ChatCompletionRequest) (*Completion, error) {
