@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/shopsprint/decimal"
 	"strconv"
 	"strings"
 )
@@ -37,9 +38,9 @@ type EstimateTokenCount struct {
 
 type Balance struct {
 	Data struct {
-		AvailableBalance float64 `json:"available_balance"`
-		VoucherBalance   float64 `json:"voucher_balance"`
-		CashBalance      float64 `json:"cash_balance"`
+		AvailableBalance decimal.Decimal `json:"available_balance"`
+		VoucherBalance   decimal.Decimal `json:"voucher_balance"`
+		CashBalance      decimal.Decimal `json:"cash_balance"`
 	} `json:"data"`
 }
 

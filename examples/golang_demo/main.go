@@ -72,7 +72,7 @@ func runDemo() error {
 		return err
 	}
 
-	log.Printf("balance=%.2f", balance.Data.AvailableBalance)
+	log.Printf("balance=%s", balance.Data.AvailableBalance)
 
 	completion, err := client.CreateChatCompletion(ctx, &ChatCompletionRequest{
 		Messages: []*Message{
