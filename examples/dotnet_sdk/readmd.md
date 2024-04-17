@@ -3,6 +3,17 @@
 Moonshot SDK for .NET is a library that allows you to interact with the Moonshot API from your .NET application.
 
 - [api-reference](https://platform.moonshot.cn/docs/api-reference)
+- dotnet core 8.0 sdk
+
+## package
+
+```xml
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
+  </ItemGroup>
+```
 
 ## src
 
