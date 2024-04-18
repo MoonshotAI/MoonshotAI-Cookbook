@@ -42,7 +42,7 @@ namespace MoonshotDotnet
         /// <returns>Return HttpResponseMessage for SSE</returns>
         public async Task<HttpResponseMessage> Chat(string requestBody)
         {
-            return await PostJsonAsync("/v1/chat/completions", requestBody);
+            return await PostJsonStreamAsync("/v1/chat/completions", requestBody);
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace MoonshotDotnet
         public async Task<HttpResponseMessage> Chat(ChatReq chatReq)
         {
             var requestBody = Newtonsoft.Json.JsonConvert.SerializeObject(chatReq);
-            return await PostJsonAsync("/v1/chat/completions", requestBody);
+            return await PostJsonStreamAsync("/v1/chat/completions", requestBody);
         }
 
 
@@ -135,6 +135,27 @@ namespace MoonshotDotnet
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
             return await client.PostAsync(Host + path, new StringContent(json, Encoding.UTF8, "application/json"));
         }
+
+        private async Task<HttpResponseMessage> PostJsonStreamAsync(string path, string json)
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
+            var request = ToHttpRequest(path);
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+            // ResponseHeadersRead is required for SSE
+            return await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        }
+
+        private HttpRequestMessage ToHttpRequest(string path)
+        {
+            var request = new HttpRequestMessage();
+            var uriBuilder = new UriBuilder(Host + path);
+            request.RequestUri = uriBuilder.Uri;
+            request.Method = new HttpMethod("POST");
+            request.Headers.Host = (new Uri(Host)).Host;
+            return request;
+        }
+
 
 
         /// <summary>
