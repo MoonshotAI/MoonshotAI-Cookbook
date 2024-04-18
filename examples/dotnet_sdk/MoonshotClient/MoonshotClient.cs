@@ -15,47 +15,6 @@ namespace MoonshotDotnet
     /// </summary>
     public class MoonshotClient
     {
-
-        private static string _host = "https://api.moonshot.cn";
-
-        public static string Host
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_host) && !string.IsNullOrEmpty(ConfigurationManager.AppSettings["MoonshotHost"]))
-                {
-                    _host = ConfigurationManager.AppSettings["MoonshotHost"];
-                }
-
-                return _host;
-            }
-            set
-            {
-
-                _host = value;
-            }
-        }
-
-
-        private static string _apiKey = "sk_";
-
-        public static string ApiKey
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(_apiKey) && !string.IsNullOrEmpty(ConfigurationManager.AppSettings["MoonshotApiKey"]))
-                {
-                    _apiKey = ConfigurationManager.AppSettings["MoonshotApiKey"];
-                }
-
-                return _apiKey;
-            }
-            set
-            {
-                _apiKey = value;
-            }
-        }
-
         private readonly ILogger<MoonshotClient> _logger;
 
         private readonly IHttpClientFactory _httpClientFactory;
@@ -66,17 +25,31 @@ namespace MoonshotDotnet
             _httpClientFactory = httpClientFactory;
         }
 
+        /// <summary>
+        ///  list models
+        /// </summary>
+        /// <returns></returns>
         public async Task<ModelListResp> ListModels()
         {
             var response = await GetAsync("/v1/models");
             return await ParseResp<ModelListResp>(response);
         }
 
+        /// <summary>
+        /// Chat
+        /// </summary>
+        /// <param name="requestBody"></param>
+        /// <returns>Return HttpResponseMessage for SSE</returns>
         public async Task<HttpResponseMessage> Chat(string requestBody)
         {
             return await PostJsonAsync("/v1/chat/completions", requestBody);
         }
 
+        /// <summary>
+        /// Chat
+        /// </summary>
+        /// <param name="chatReq"></param>
+        /// <returns>Return HttpResponseMessage for SSE</returns>
         public async Task<HttpResponseMessage> Chat(ChatReq chatReq)
         {
             var requestBody = Newtonsoft.Json.JsonConvert.SerializeObject(chatReq);
@@ -85,7 +58,7 @@ namespace MoonshotDotnet
 
 
         /// <summary>
-        ///  
+        ///  List files
         /// </summary>
         public virtual async Task<FileListResp> ListFiles()
         {
@@ -121,9 +94,9 @@ namespace MoonshotDotnet
 
 
         /// <summary>
-        ///  Upload file
+        ///  Upload file stream
         /// </summary>
-        public virtual async Task<FileItem> UploadFile(Stream stream, string fileName)
+        public virtual async Task<FileItem> UploadFileStream(Stream stream, string fileName)
         {
             var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
@@ -178,5 +151,48 @@ namespace MoonshotDotnet
             _logger.LogError($"{error.error.type}: {error.error.message}");
             throw new Exception($"{error.error.type}: {error.error.message}");
         }
+
+
+
+        private static string _host = "https://api.moonshot.cn";
+
+        public static string Host
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_host) && !string.IsNullOrEmpty(ConfigurationManager.AppSettings["MoonshotHost"]))
+                {
+                    _host = ConfigurationManager.AppSettings["MoonshotHost"];
+                }
+
+                return _host;
+            }
+            set
+            {
+
+                _host = value;
+            }
+        }
+
+
+        private static string _apiKey = "sk_";
+
+        public static string ApiKey
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_apiKey) && !string.IsNullOrEmpty(ConfigurationManager.AppSettings["MoonshotApiKey"]))
+                {
+                    _apiKey = ConfigurationManager.AppSettings["MoonshotApiKey"];
+                }
+
+                return _apiKey;
+            }
+            set
+            {
+                _apiKey = value;
+            }
+        }
+
     }
 }
