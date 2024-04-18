@@ -2,10 +2,9 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.IO;
 using System.Configuration;
+using Newtonsoft.Json.Linq;
 
 namespace MoonshotDotnet
 {
@@ -54,6 +53,35 @@ namespace MoonshotDotnet
         {
             var requestBody = Newtonsoft.Json.JsonConvert.SerializeObject(chatReq);
             return await PostJsonStreamAsync("/v1/chat/completions", requestBody);
+        }
+
+        /// <summary>
+        ///  Get as timate token count
+        /// </summary>
+        public async Task<int?> GetAsTiMateTokenCount(string chatReqText)
+        {
+            var response = await PostJsonAsync("/v1/tokenizers/estimate-token-count", chatReqText);
+            var responseText = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                var responseObj = JToken.Parse(responseText);
+                return responseObj?["data"]?["total_tokens"]?.ToObject<int>();
+            }
+            var error = Newtonsoft.Json.JsonConvert.DeserializeObject<ErrorResponse>(responseText);
+            _logger.LogError($"{error?.error?.type}: {error?.error?.message}");
+            throw new Exception($"{error?.error.type}: {error?.error.message}");
+        }
+
+
+        /// <summary>
+        /// Get as timate token count
+        /// </summary>
+        /// <param name="chatReq"></param>
+        /// <returns></returns>
+        public async Task<int?> GetAsTiMateTokenCount(ChatReq chatReq)
+        {
+            var chatReqText = Newtonsoft.Json.JsonConvert.SerializeObject(chatReq);
+            return await GetAsTiMateTokenCount(chatReqText);
         }
 
 
@@ -142,7 +170,6 @@ namespace MoonshotDotnet
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey);
             var request = ToHttpRequest(path);
             request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-            // ResponseHeadersRead is required for SSE
             return await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
         }
 
@@ -166,11 +193,11 @@ namespace MoonshotDotnet
             var responseText = await response.Content.ReadAsStringAsync();
             if (response.IsSuccessStatusCode)
             {
-                return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseText);
+                return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(responseText) ?? default;
             }
             var error = Newtonsoft.Json.JsonConvert.DeserializeObject<ErrorResponse>(responseText);
-            _logger.LogError($"{error.error.type}: {error.error.message}");
-            throw new Exception($"{error.error.type}: {error.error.message}");
+            _logger.LogError($"{error?.error.type}: {error?.error.message}");
+            throw new Exception($"{error?.error.type}: {error?.error.message}");
         }
 
 
@@ -183,7 +210,7 @@ namespace MoonshotDotnet
             {
                 if (string.IsNullOrEmpty(_host) && !string.IsNullOrEmpty(ConfigurationManager.AppSettings["MoonshotHost"]))
                 {
-                    _host = ConfigurationManager.AppSettings["MoonshotHost"];
+                    _host = ConfigurationManager.AppSettings?["MoonshotHost"] ?? "";
                 }
 
                 return _host;
@@ -204,7 +231,7 @@ namespace MoonshotDotnet
             {
                 if (string.IsNullOrEmpty(_apiKey) && !string.IsNullOrEmpty(ConfigurationManager.AppSettings["MoonshotApiKey"]))
                 {
-                    _apiKey = ConfigurationManager.AppSettings["MoonshotApiKey"];
+                    _apiKey = ConfigurationManager.AppSettings["MoonshotApiKey"] ?? "";
                 }
 
                 return _apiKey;
