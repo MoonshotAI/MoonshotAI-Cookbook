@@ -9,7 +9,7 @@ webman/openai 是一个异步非阻塞的openai客户端，配合webman可以做
 ```php
 cd examples/php_demo
 
-compsoer install
+composer install
 ```
 > 安装该插件之前记得先安装webman框架。
 
