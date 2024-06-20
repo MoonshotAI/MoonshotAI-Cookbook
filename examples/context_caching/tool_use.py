@@ -7,6 +7,27 @@ client = OpenAI(
     base_url = "https://api.moonshot.cn/v1",
 )
 
+def delete(id):
+    res = requests.delete(
+        url = f"https://api.moonshot.cn/v1/caching/{id}",
+        headers = {
+            "Authorization": "Bearer $MOONSHOT_API_KEY"            
+        },
+    )
+    print(json.loads(res.text))
+
+def clear():
+    res = requests.get(
+        url = "https://api.moonshot.cn/v1/caching",
+        headers = {
+            "Authorization": "Bearer $MOONSHOT_API_KEY"            
+        },
+    )
+
+    data = json.loads(res.text)["data"]
+    for i in data:
+        delete(i["id"])
+
 def create():
     res = requests.post(
         url = "https://api.moonshot.cn/v1/caching",
