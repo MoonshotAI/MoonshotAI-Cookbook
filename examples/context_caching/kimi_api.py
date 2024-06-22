@@ -11,7 +11,7 @@ def delete(id):
     res = requests.delete(
         url = f"https://api.moonshot.cn/v1/caching/{id}",
         headers = {
-            "Authorization": "Bearer $MOONSHOT_API_KEY"            
+            "Authorization": "Bearer $MOONSHOT_API_KEY"
         },
     )
     print(json.loads(res.text))
@@ -20,7 +20,7 @@ def clear():
     res = requests.get(
         url = "https://api.moonshot.cn/v1/caching",
         headers = {
-            "Authorization": "Bearer $MOONSHOT_API_KEY"            
+            "Authorization": "Bearer $MOONSHOT_API_KEY"
         },
     )
 
@@ -71,7 +71,7 @@ def create():
 def query_with_cache(query, cache_id):
     completion = client.chat.completions.create(
         model="moonshot-v1-32k",
-        messages=[  
+        messages=[
             {
                 "role": "cache",
                 "content": f"cache_id={cache_id};dry_run=0",
@@ -85,6 +85,6 @@ def query_with_cache(query, cache_id):
     )
     #print(completion)
     print(completion.choices[0].message)
- 
+
 #create()
 query_with_cache("怎么计费的？", "cache-essz9wbgtwf111fxjs91")
