@@ -1,3 +1,4 @@
+# coding:utf-8
 from openai import OpenAI
 import requests
 import json
