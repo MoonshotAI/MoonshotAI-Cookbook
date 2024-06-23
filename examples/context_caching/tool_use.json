@@ -1,0 +1,29 @@
+{
+    "model": "moonshot-v1",
+    "messages": [{
+        "role": "system",
+        "content": "你是 Kimi，由 Moonshot AI 提供的人工智能助手，你更擅长中文和英文的对话。你会为用户提供安全，有帮助，准确的回答。同时，你会拒绝一切涉及恐怖主义，种族歧视，黄色暴力等问题的回答。Moonshot AI 为专有名词，不可翻译成其他语言。"
+    }],
+    "tools": [{
+        "type": "function",
+        "function": {
+            "name": "Code_Runner",
+            "description": "代码执行器，支持运行 python 和 javascript 代码",
+            "parameters": {
+                "properties": {
+                    "language": {
+                        "type": "string",
+                        "enum": ["python", "javascript"]
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "代码写在这里"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    }],
+    "name": "tool_use",
+    "ttl": 3600
+}
