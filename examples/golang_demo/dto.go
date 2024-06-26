@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"github.com/shopsprint/decimal"
 	"strconv"
 	"strings"
+
+	"github.com/shopsprint/decimal"
 )
 
 type Error struct {
@@ -314,6 +316,29 @@ type File struct {
 	Purpose       string `json:"purpose"`
 	Status        string `json:"status"`
 	StatusDetails string `json:"status_details"`
+}
+
+type ContextMessages []*Message
+
+func (messages *ContextMessages) Scan(src any) error {
+	if src == nil {
+		return nil
+	}
+	switch data := src.(type) {
+	case string:
+		return json.Unmarshal([]byte(data), messages)
+	}
+	return fmt.Errorf("unsupported type: %T", src)
+}
+
+func (messages ContextMessages) Value() (driver.Value, error) {
+	return toJSON(messages)
+}
+
+type ContextCache struct {
+	ID       string          `json:"id" db:"cache_id"`
+	Status   string          `json:"status" db:"cache_status"`
+	Messages ContextMessages `json:"messages" db:"cache_messages"`
 }
 
 type ToolChoice string
