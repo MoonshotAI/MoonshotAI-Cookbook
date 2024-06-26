@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -53,6 +54,44 @@ func (r *EstimateTokenCountRequest) ToJSON() (string, error) {
 		Model:    r.Model,
 		Messages: r.Messages,
 	})
+}
+
+type CreateContextCacheRequest struct {
+	Messages    []*Message        `json:"messages"`
+	Model       string            `json:"model"`
+	Tools       []*Tool           `json:"tools"`
+	Name        string            `json:"name,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Metadata    map[string]string `json:"metadata,omitempty"`
+	ExpiredAt   int               `json:"expiredAt,omitempty"`
+	TTL         int               `json:"ttl,omitempty"`
+}
+
+func (r *CreateContextCacheRequest) ToJSON() (string, error) {
+	return toJSON(r)
+}
+
+type ContextCacheOptions struct {
+	CacheID  string
+	ResetTTL int
+}
+
+type contextKeyCacheID struct{}
+
+func withCacheOptions(ctx context.Context, options *ContextCacheOptions) context.Context {
+	return context.WithValue(ctx, contextKeyCacheID{}, options)
+}
+
+func getCacheOptions(ctx context.Context) *ContextCacheOptions {
+	cv := ctx.Value(contextKeyCacheID{})
+	if cv == nil {
+		return nil
+	}
+	options, ok := cv.(*ContextCacheOptions)
+	if !ok {
+		return nil
+	}
+	return options
 }
 
 func toJSON(obj any) (string, error) {

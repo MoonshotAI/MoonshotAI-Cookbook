@@ -1,5 +1,5 @@
-//go:build !generate_models_file
-// +build !generate_models_file
+//go:build !generate_models_file && !context_cache
+// +build !generate_models_file,!context_cache
 
 package main
 

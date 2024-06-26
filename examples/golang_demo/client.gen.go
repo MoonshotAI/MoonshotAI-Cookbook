@@ -22,6 +22,9 @@ const (
 	CallerCheckBalance               = "CheckBalance"
 	CallerCreateChatCompletion       = "CreateChatCompletion"
 	CallerCreateChatCompletionStream = "CreateChatCompletionStream"
+	CallerCreateContextCache         = "CreateContextCache"
+	CallerRetrieveContextCache       = "RetrieveContextCache"
+	CallerDeleteContextCache         = "DeleteContextCache"
 	CallerUploadFile                 = "UploadFile"
 	CallerRetrieveFileContent        = "RetrieveFileContent"
 )
@@ -35,20 +38,26 @@ type implClient[C Caller] struct {
 }
 
 var (
-	addrTmplListModels                   = template.Must(template.New("AddressListModels").Parse("{{ $.Client.BaseUrl }}/models"))
-	headerTmplListModels                 = template.Must(template.New("HeaderListModels").Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
-	addrTmplEstimateTokenCount           = template.Must(template.New("AddressEstimateTokenCount").Parse("{{ $.Client.BaseUrl }}/tokenizers/estimate-token-count"))
-	headerTmplEstimateTokenCount         = template.Must(template.New("HeaderEstimateTokenCount").Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n{{ $.request.ToJSON }}"))
-	addrTmplCheckBalance                 = template.Must(template.New("AddressCheckBalance").Parse("{{ $.Client.BaseUrl }}/users/me/balance"))
-	headerTmplCheckBalance               = template.Must(template.New("HeaderCheckBalance").Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
-	addrTmplCreateChatCompletion         = template.Must(template.New("AddressCreateChatCompletion").Parse("{{ $.Client.BaseUrl }}/chat/completions"))
-	headerTmplCreateChatCompletion       = template.Must(template.New("HeaderCreateChatCompletion").Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n{{ $.request.ToJSON }}"))
-	addrTmplCreateChatCompletionStream   = template.Must(template.New("AddressCreateChatCompletionStream").Parse("{{ $.Client.BaseUrl }}/chat/completions"))
-	headerTmplCreateChatCompletionStream = template.Must(template.New("HeaderCreateChatCompletionStream").Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n{{ $.request.ToJSON }}"))
-	addrTmplUploadFile                   = template.Must(template.New("AddressUploadFile").Parse("{{ $.Client.BaseUrl }}/files"))
-	headerTmplUploadFile                 = template.Must(template.New("HeaderUploadFile").Parse("Content-Type: {{ $.request.ContentType }}\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
-	addrTmplRetrieveFileContent          = template.Must(template.New("AddressRetrieveFileContent").Parse("{{ $.Client.BaseUrl }}/files/{{ $.fileID }}/content"))
-	headerTmplRetrieveFileContent        = template.Must(template.New("HeaderRetrieveFileContent").Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
+	addrTmplListModels                   = template.Must(template.New("AddressListModels").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/models"))
+	headerTmplListModels                 = template.Must(template.New("HeaderListModels").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
+	addrTmplEstimateTokenCount           = template.Must(template.New("AddressEstimateTokenCount").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/tokenizers/estimate-token-count"))
+	headerTmplEstimateTokenCount         = template.Must(template.New("HeaderEstimateTokenCount").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n{{ $.request.ToJSON }}"))
+	addrTmplCheckBalance                 = template.Must(template.New("AddressCheckBalance").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/users/me/balance"))
+	headerTmplCheckBalance               = template.Must(template.New("HeaderCheckBalance").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
+	addrTmplCreateChatCompletion         = template.Must(template.New("AddressCreateChatCompletion").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/chat/completions"))
+	headerTmplCreateChatCompletion       = template.Must(template.New("HeaderCreateChatCompletion").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n{{ $options := (get_cache_options $.ctx) -}}\r\n{{ if $options }}X-Msh-Context-Cache: {{ $options.CacheID }}\r\n{{ end }}{{ if $options }}{{ if $options.ResetTTL }}X-Msh-Context-Cache-Reset-TTL: {{ $options.ResetTTL }}\r\n{{ end }}{{ end }}\r\n\r\n{{ $.request.ToJSON }}"))
+	addrTmplCreateChatCompletionStream   = template.Must(template.New("AddressCreateChatCompletionStream").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/chat/completions"))
+	headerTmplCreateChatCompletionStream = template.Must(template.New("HeaderCreateChatCompletionStream").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n{{ $options := (get_cache_options $.ctx) -}}\r\n{{ if $options }}X-Msh-Context-Cache: {{ $options.CacheID }}\r\n{{ end }}{{ if $options }}{{ if $options.ResetTTL }}X-Msh-Context-Cache-Reset-TTL: {{ $options.ResetTTL }}\r\n{{ end }}{{ end }}\r\n\r\n{{ $.request.ToJSON }}"))
+	addrTmplCreateContextCache           = template.Must(template.New("AddressCreateContextCache").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/caching"))
+	headerTmplCreateContextCache         = template.Must(template.New("HeaderCreateContextCache").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n{{ $.request.ToJSON }}"))
+	addrTmplRetrieveContextCache         = template.Must(template.New("AddressRetrieveContextCache").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/caching/{{ $.cacheID }}"))
+	headerTmplRetrieveContextCache       = template.Must(template.New("HeaderRetrieveContextCache").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
+	addrTmplDeleteContextCache           = template.Must(template.New("AddressDeleteContextCache").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/caching/{{ $.cacheID }}"))
+	headerTmplDeleteContextCache         = template.Must(template.New("HeaderDeleteContextCache").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
+	addrTmplUploadFile                   = template.Must(template.New("AddressUploadFile").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/files"))
+	headerTmplUploadFile                 = template.Must(template.New("HeaderUploadFile").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: {{ $.request.ContentType }}\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
+	addrTmplRetrieveFileContent          = template.Must(template.New("AddressRetrieveFileContent").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/files/{{ $.fileID }}/content"))
+	headerTmplRetrieveFileContent        = template.Must(template.New("HeaderRetrieveFileContent").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
 )
 
 func (__imp *implClient[C]) ListModels(ctx context.Context) (*Models, error) {
@@ -512,6 +521,282 @@ func (__imp *implClient[C]) CreateChatCompletionStream(ctx context.Context, requ
 	}
 
 	return v0CreateChatCompletionStream, nil
+}
+
+func (__imp *implClient[C]) CreateContextCache(ctx context.Context, request *CreateContextCacheRequest) (*ContextCache, error) {
+	var innerCreateContextCache any = __imp.Inner()
+
+	addrCreateContextCache := __ClientGetBuffer()
+	defer __ClientPutBuffer(addrCreateContextCache)
+	defer addrCreateContextCache.Reset()
+
+	headerCreateContextCache := __ClientGetBuffer()
+	defer __ClientPutBuffer(headerCreateContextCache)
+	defer headerCreateContextCache.Reset()
+
+	var (
+		v0CreateContextCache           = new(ContextCache)
+		errCreateContextCache          error
+		httpResponseCreateContextCache *http.Response
+		responseCreateContextCache     ClientResponseInterface = __imp.response()
+	)
+
+	if errCreateContextCache = addrTmplCreateContextCache.Execute(addrCreateContextCache, map[string]any{
+		"Client":  __imp.Inner(),
+		"ctx":     ctx,
+		"request": request,
+	}); errCreateContextCache != nil {
+		return v0CreateContextCache, fmt.Errorf("error building 'CreateContextCache' url: %w", errCreateContextCache)
+	}
+
+	if errCreateContextCache = headerTmplCreateContextCache.Execute(headerCreateContextCache, map[string]any{
+		"Client":  __imp.Inner(),
+		"ctx":     ctx,
+		"request": request,
+	}); errCreateContextCache != nil {
+		return v0CreateContextCache, fmt.Errorf("error building 'CreateContextCache' header: %w", errCreateContextCache)
+	}
+	bufReaderCreateContextCache := bufio.NewReader(headerCreateContextCache)
+	mimeHeaderCreateContextCache, errCreateContextCache := textproto.NewReader(bufReaderCreateContextCache).ReadMIMEHeader()
+	if errCreateContextCache != nil {
+		return v0CreateContextCache, fmt.Errorf("error reading 'CreateContextCache' header: %w", errCreateContextCache)
+	}
+
+	urlCreateContextCache := addrCreateContextCache.String()
+	requestBodyCreateContextCache, errCreateContextCache := io.ReadAll(bufReaderCreateContextCache)
+	if errCreateContextCache != nil {
+		return v0CreateContextCache, fmt.Errorf("error reading 'CreateContextCache' request body: %w", errCreateContextCache)
+	}
+	requestCreateContextCache, errCreateContextCache := http.NewRequestWithContext(ctx, "POST", urlCreateContextCache, bytes.NewReader(requestBodyCreateContextCache))
+	if errCreateContextCache != nil {
+		return v0CreateContextCache, fmt.Errorf("error building 'CreateContextCache' request: %w", errCreateContextCache)
+	}
+
+	for kCreateContextCache, vvCreateContextCache := range mimeHeaderCreateContextCache {
+		for _, vCreateContextCache := range vvCreateContextCache {
+			requestCreateContextCache.Header.Add(kCreateContextCache, vCreateContextCache)
+		}
+	}
+
+	startCreateContextCache := time.Now()
+
+	if httpClientCreateContextCache, okCreateContextCache := innerCreateContextCache.(interface{ Client() *http.Client }); okCreateContextCache {
+		httpResponseCreateContextCache, errCreateContextCache = httpClientCreateContextCache.Client().Do(requestCreateContextCache)
+	} else {
+		httpResponseCreateContextCache, errCreateContextCache = http.DefaultClient.Do(requestCreateContextCache)
+	}
+
+	if logCreateContextCache, okCreateContextCache := innerCreateContextCache.(interface {
+		Log(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration)
+	}); okCreateContextCache {
+		logCreateContextCache.Log(ctx, "CreateContextCache", requestCreateContextCache, httpResponseCreateContextCache, time.Since(startCreateContextCache))
+	}
+
+	if errCreateContextCache != nil {
+		return v0CreateContextCache, fmt.Errorf("error sending 'CreateContextCache' request: %w", errCreateContextCache)
+	}
+
+	if httpResponseCreateContextCache.StatusCode < 200 || httpResponseCreateContextCache.StatusCode > 299 {
+		return v0CreateContextCache, __ClientNewResponseError("CreateContextCache", httpResponseCreateContextCache)
+	}
+
+	if errCreateContextCache = responseCreateContextCache.FromResponse("CreateContextCache", httpResponseCreateContextCache); errCreateContextCache != nil {
+		return v0CreateContextCache, fmt.Errorf("error converting 'CreateContextCache' response: %w", errCreateContextCache)
+	}
+
+	addrCreateContextCache.Reset()
+	headerCreateContextCache.Reset()
+
+	if errCreateContextCache = responseCreateContextCache.Err(); errCreateContextCache != nil {
+		return v0CreateContextCache, fmt.Errorf("error returned from 'CreateContextCache' response: %w", errCreateContextCache)
+	}
+
+	if errCreateContextCache = responseCreateContextCache.ScanValues(v0CreateContextCache); errCreateContextCache != nil {
+		return v0CreateContextCache, fmt.Errorf("error scanning value from 'CreateContextCache' response: %w", errCreateContextCache)
+	}
+
+	return v0CreateContextCache, nil
+}
+
+func (__imp *implClient[C]) RetrieveContextCache(ctx context.Context, cacheID string) (*ContextCache, error) {
+	var innerRetrieveContextCache any = __imp.Inner()
+
+	addrRetrieveContextCache := __ClientGetBuffer()
+	defer __ClientPutBuffer(addrRetrieveContextCache)
+	defer addrRetrieveContextCache.Reset()
+
+	headerRetrieveContextCache := __ClientGetBuffer()
+	defer __ClientPutBuffer(headerRetrieveContextCache)
+	defer headerRetrieveContextCache.Reset()
+
+	var (
+		v0RetrieveContextCache           = new(ContextCache)
+		errRetrieveContextCache          error
+		httpResponseRetrieveContextCache *http.Response
+		responseRetrieveContextCache     ClientResponseInterface = __imp.response()
+	)
+
+	if errRetrieveContextCache = addrTmplRetrieveContextCache.Execute(addrRetrieveContextCache, map[string]any{
+		"Client":  __imp.Inner(),
+		"ctx":     ctx,
+		"cacheID": cacheID,
+	}); errRetrieveContextCache != nil {
+		return v0RetrieveContextCache, fmt.Errorf("error building 'RetrieveContextCache' url: %w", errRetrieveContextCache)
+	}
+
+	if errRetrieveContextCache = headerTmplRetrieveContextCache.Execute(headerRetrieveContextCache, map[string]any{
+		"Client":  __imp.Inner(),
+		"ctx":     ctx,
+		"cacheID": cacheID,
+	}); errRetrieveContextCache != nil {
+		return v0RetrieveContextCache, fmt.Errorf("error building 'RetrieveContextCache' header: %w", errRetrieveContextCache)
+	}
+	bufReaderRetrieveContextCache := bufio.NewReader(headerRetrieveContextCache)
+	mimeHeaderRetrieveContextCache, errRetrieveContextCache := textproto.NewReader(bufReaderRetrieveContextCache).ReadMIMEHeader()
+	if errRetrieveContextCache != nil {
+		return v0RetrieveContextCache, fmt.Errorf("error reading 'RetrieveContextCache' header: %w", errRetrieveContextCache)
+	}
+
+	urlRetrieveContextCache := addrRetrieveContextCache.String()
+	requestRetrieveContextCache, errRetrieveContextCache := http.NewRequestWithContext(ctx, "GET", urlRetrieveContextCache, http.NoBody)
+	if errRetrieveContextCache != nil {
+		return v0RetrieveContextCache, fmt.Errorf("error building 'RetrieveContextCache' request: %w", errRetrieveContextCache)
+	}
+
+	for kRetrieveContextCache, vvRetrieveContextCache := range mimeHeaderRetrieveContextCache {
+		for _, vRetrieveContextCache := range vvRetrieveContextCache {
+			requestRetrieveContextCache.Header.Add(kRetrieveContextCache, vRetrieveContextCache)
+		}
+	}
+
+	startRetrieveContextCache := time.Now()
+
+	if httpClientRetrieveContextCache, okRetrieveContextCache := innerRetrieveContextCache.(interface{ Client() *http.Client }); okRetrieveContextCache {
+		httpResponseRetrieveContextCache, errRetrieveContextCache = httpClientRetrieveContextCache.Client().Do(requestRetrieveContextCache)
+	} else {
+		httpResponseRetrieveContextCache, errRetrieveContextCache = http.DefaultClient.Do(requestRetrieveContextCache)
+	}
+
+	if logRetrieveContextCache, okRetrieveContextCache := innerRetrieveContextCache.(interface {
+		Log(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration)
+	}); okRetrieveContextCache {
+		logRetrieveContextCache.Log(ctx, "RetrieveContextCache", requestRetrieveContextCache, httpResponseRetrieveContextCache, time.Since(startRetrieveContextCache))
+	}
+
+	if errRetrieveContextCache != nil {
+		return v0RetrieveContextCache, fmt.Errorf("error sending 'RetrieveContextCache' request: %w", errRetrieveContextCache)
+	}
+
+	if httpResponseRetrieveContextCache.StatusCode < 200 || httpResponseRetrieveContextCache.StatusCode > 299 {
+		return v0RetrieveContextCache, __ClientNewResponseError("RetrieveContextCache", httpResponseRetrieveContextCache)
+	}
+
+	if errRetrieveContextCache = responseRetrieveContextCache.FromResponse("RetrieveContextCache", httpResponseRetrieveContextCache); errRetrieveContextCache != nil {
+		return v0RetrieveContextCache, fmt.Errorf("error converting 'RetrieveContextCache' response: %w", errRetrieveContextCache)
+	}
+
+	addrRetrieveContextCache.Reset()
+	headerRetrieveContextCache.Reset()
+
+	if errRetrieveContextCache = responseRetrieveContextCache.Err(); errRetrieveContextCache != nil {
+		return v0RetrieveContextCache, fmt.Errorf("error returned from 'RetrieveContextCache' response: %w", errRetrieveContextCache)
+	}
+
+	if errRetrieveContextCache = responseRetrieveContextCache.ScanValues(v0RetrieveContextCache); errRetrieveContextCache != nil {
+		return v0RetrieveContextCache, fmt.Errorf("error scanning value from 'RetrieveContextCache' response: %w", errRetrieveContextCache)
+	}
+
+	return v0RetrieveContextCache, nil
+}
+
+func (__imp *implClient[C]) DeleteContextCache(ctx context.Context, cacheID string) error {
+	var innerDeleteContextCache any = __imp.Inner()
+
+	addrDeleteContextCache := __ClientGetBuffer()
+	defer __ClientPutBuffer(addrDeleteContextCache)
+	defer addrDeleteContextCache.Reset()
+
+	headerDeleteContextCache := __ClientGetBuffer()
+	defer __ClientPutBuffer(headerDeleteContextCache)
+	defer headerDeleteContextCache.Reset()
+
+	var (
+		errDeleteContextCache          error
+		httpResponseDeleteContextCache *http.Response
+		responseDeleteContextCache     ClientResponseInterface = __imp.response()
+	)
+
+	if errDeleteContextCache = addrTmplDeleteContextCache.Execute(addrDeleteContextCache, map[string]any{
+		"Client":  __imp.Inner(),
+		"ctx":     ctx,
+		"cacheID": cacheID,
+	}); errDeleteContextCache != nil {
+		return fmt.Errorf("error building 'DeleteContextCache' url: %w", errDeleteContextCache)
+	}
+
+	if errDeleteContextCache = headerTmplDeleteContextCache.Execute(headerDeleteContextCache, map[string]any{
+		"Client":  __imp.Inner(),
+		"ctx":     ctx,
+		"cacheID": cacheID,
+	}); errDeleteContextCache != nil {
+		return fmt.Errorf("error building 'DeleteContextCache' header: %w", errDeleteContextCache)
+	}
+	bufReaderDeleteContextCache := bufio.NewReader(headerDeleteContextCache)
+	mimeHeaderDeleteContextCache, errDeleteContextCache := textproto.NewReader(bufReaderDeleteContextCache).ReadMIMEHeader()
+	if errDeleteContextCache != nil {
+		return fmt.Errorf("error reading 'DeleteContextCache' header: %w", errDeleteContextCache)
+	}
+
+	urlDeleteContextCache := addrDeleteContextCache.String()
+	requestDeleteContextCache, errDeleteContextCache := http.NewRequestWithContext(ctx, "DELETE", urlDeleteContextCache, http.NoBody)
+	if errDeleteContextCache != nil {
+		return fmt.Errorf("error building 'DeleteContextCache' request: %w", errDeleteContextCache)
+	}
+
+	for kDeleteContextCache, vvDeleteContextCache := range mimeHeaderDeleteContextCache {
+		for _, vDeleteContextCache := range vvDeleteContextCache {
+			requestDeleteContextCache.Header.Add(kDeleteContextCache, vDeleteContextCache)
+		}
+	}
+
+	startDeleteContextCache := time.Now()
+
+	if httpClientDeleteContextCache, okDeleteContextCache := innerDeleteContextCache.(interface{ Client() *http.Client }); okDeleteContextCache {
+		httpResponseDeleteContextCache, errDeleteContextCache = httpClientDeleteContextCache.Client().Do(requestDeleteContextCache)
+	} else {
+		httpResponseDeleteContextCache, errDeleteContextCache = http.DefaultClient.Do(requestDeleteContextCache)
+	}
+
+	if logDeleteContextCache, okDeleteContextCache := innerDeleteContextCache.(interface {
+		Log(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration)
+	}); okDeleteContextCache {
+		logDeleteContextCache.Log(ctx, "DeleteContextCache", requestDeleteContextCache, httpResponseDeleteContextCache, time.Since(startDeleteContextCache))
+	}
+
+	if errDeleteContextCache != nil {
+		return fmt.Errorf("error sending 'DeleteContextCache' request: %w", errDeleteContextCache)
+	}
+
+	if httpResponseDeleteContextCache.StatusCode < 200 || httpResponseDeleteContextCache.StatusCode > 299 {
+		return __ClientNewResponseError("DeleteContextCache", httpResponseDeleteContextCache)
+	}
+
+	if errDeleteContextCache = responseDeleteContextCache.FromResponse("DeleteContextCache", httpResponseDeleteContextCache); errDeleteContextCache != nil {
+		return fmt.Errorf("error converting 'DeleteContextCache' response: %w", errDeleteContextCache)
+	}
+
+	addrDeleteContextCache.Reset()
+	headerDeleteContextCache.Reset()
+
+	if errDeleteContextCache = responseDeleteContextCache.Err(); errDeleteContextCache != nil {
+		return fmt.Errorf("error returned from 'DeleteContextCache' response: %w", errDeleteContextCache)
+	}
+
+	if errDeleteContextCache = responseDeleteContextCache.ScanValues(); errDeleteContextCache != nil {
+		return fmt.Errorf("error scanning value from 'DeleteContextCache' response: %w", errDeleteContextCache)
+	}
+
+	return nil
 }
 
 func (__imp *implClient[C]) UploadFile(ctx context.Context, request *UploadFileRequest) (*File, error) {
