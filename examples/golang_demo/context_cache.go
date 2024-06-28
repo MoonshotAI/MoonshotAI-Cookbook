@@ -28,6 +28,11 @@ const (
 	cacheStatusInactive = "inactive"
 )
 
+var documents = []string{
+	"moonshot.pdf",
+	"moonshot-context-cache.pdf",
+}
+
 func initKnowledge(
 	ctx context.Context,
 	client Client[moonshot],
@@ -57,23 +62,27 @@ func initKnowledge(
 		}
 	}
 	if cache.ID == "" || cache.Status == cacheStatusError {
-		file, err := os.Open("moonshot.pdf")
-		if err != nil {
-			return nil, "", err
-		}
-		uploadedFile, err := client.UploadFile(ctx, &UploadFileRequest{
-			File:    file,
-			Purpose: "file-extract",
-		})
-		if err != nil {
-			return nil, "", err
-		}
-		fileContent, err := client.RetrieveFileContent(ctx, uploadedFile.ID)
-		if err != nil {
-			return nil, "", err
-		}
-		messages = []*Message{
-			{Role: RoleSystem, Content: &Content{Text: string(fileContent)}},
+		for _, document := range documents {
+			file, err := os.Open(document)
+			if err != nil {
+				return nil, "", err
+			}
+			uploadedFile, err := client.UploadFile(ctx, &UploadFileRequest{
+				File:    file,
+				Purpose: "file-extract",
+			})
+			file.Close()
+			if err != nil {
+				return nil, "", err
+			}
+			fileContent, err := client.RetrieveFileContent(ctx, uploadedFile.ID)
+			if err != nil {
+				return nil, "", err
+			}
+			messages = append(messages, &Message{
+				Role:    RoleSystem,
+				Content: &Content{Text: string(fileContent)},
+			})
 		}
 		cache, err = client.CreateContextCache(ctx, &CreateContextCacheRequest{
 			Messages: messages,
@@ -157,11 +166,17 @@ func main() {
 		client:  http.DefaultClient,
 		log: func(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration) {
 			var usingCache string
-			if cacheID := request.Header.Get("X-Msh-Context-Cache"); cacheID != "" {
-				usingCache = fmt.Sprintf("; using cache: %s, reset_ttl=%s, tokens=%s",
-					cacheID,
-					request.Header.Get("X-Msh-Context-Cache-Reset-TTL"),
-					response.Header.Get("Msh-Context-Cache-Token-Saved"))
+			if response != nil {
+				cacheID := response.Header.Get("Msh-Context-Cache-Id")
+				if cacheID != "" {
+					tokenTTL := response.Header.Get("Msh-Context-Cache-Token-Ttl")
+					tokenSaved := response.Header.Get("Msh-Context-Cache-Token-Saved")
+					usingCache = fmt.Sprintf("; using cache: %s, ttl=%s, tokens=%s",
+						cacheID,
+						tokenTTL,
+						tokenSaved,
+					)
+				}
 			}
 			log.Printf("[%s] %s %s%s", caller, request.URL, elapse, usingCache)
 		},
@@ -177,6 +192,25 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	chatWithCacheByContext(ctx, client, messages, cacheID)
+	chatWithCacheByMessage(ctx, client, messages, cacheID)
+
+	if err = RemoveAllFiles(ctx, client); err != nil {
+		if parsed := ParseError(err); parsed != nil {
+			log.Fatalln("("+parsed.Type+")", parsed.Message)
+		}
+		log.Fatalln(err)
+	}
+}
+
+const input = "请列出 chat 所有支持的参数；并告诉我如何使用 Cache。"
+
+func chatWithCacheByContext(
+	ctx context.Context,
+	client Client[moonshot],
+	messages []*Message,
+	cacheID string,
+) {
 	if cacheID != "" {
 		ctx = withCacheOptions(ctx, &ContextCacheOptions{
 			CacheID:  cacheID,
@@ -186,7 +220,7 @@ func main() {
 
 	messages = append(messages, &Message{
 		Role:    RoleUser,
-		Content: &Content{Text: "请列出 chat 所有支持的参数。"},
+		Content: &Content{Text: input},
 	})
 
 	stream, err := client.CreateChatCompletionStream(ctx, &ChatCompletionStreamRequest{
@@ -205,4 +239,53 @@ func main() {
 	for chunk := range stream.C {
 		fmt.Printf("%s", chunk.GetDeltaContent())
 	}
+}
+
+func chatWithCacheByMessage(
+	ctx context.Context,
+	client Client[moonshot],
+	messages []*Message,
+	cacheID string,
+) {
+	if cacheID != "" {
+		messages = []*Message{
+			{Role: RoleCache, Content: &Content{Cache: &ContextCacheOptions{CacheID: cacheID, ResetTTL: 3600}}},
+			{Role: RoleUser, Content: &Content{Text: input}},
+		}
+	} else {
+		messages = append(messages, &Message{
+			Role:    RoleUser,
+			Content: &Content{Text: input},
+		})
+	}
+
+	stream, err := client.CreateChatCompletionStream(ctx, &ChatCompletionStreamRequest{
+		Messages: messages,
+		Model:    ModelMoonshot128K,
+	})
+
+	if err != nil {
+		if parsed := ParseError(err); parsed != nil {
+			log.Fatalln("("+parsed.Type+")", parsed.Message)
+		}
+		log.Fatalln(err)
+	}
+
+	defer stream.Close()
+	for chunk := range stream.C {
+		fmt.Printf("%s", chunk.GetDeltaContent())
+	}
+}
+
+func RemoveAllFiles(ctx context.Context, client Client[moonshot]) error {
+	files, err := client.ListFiles(ctx)
+	if err != nil {
+		return err
+	}
+	for _, file := range files.Data {
+		if err = client.DeleteFile(ctx, file.ID); err != nil {
+			return err
+		}
+	}
+	return nil
 }

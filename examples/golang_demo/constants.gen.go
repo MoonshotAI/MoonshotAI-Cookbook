@@ -9,6 +9,7 @@ const (
 	RoleAssistant = "assistant"
 	RoleUser      = "user"
 	RoleTool      = "tool"
+	RoleCache     = "cache"
 )
 
 const (

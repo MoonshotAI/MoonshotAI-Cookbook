@@ -57,14 +57,26 @@ type Message struct {
 type Content struct {
 	Text  string
 	Parts []*Part
+	Cache *ContextCacheOptions
 }
 
 func (c *Content) MarshalJSON() ([]byte, error) {
-	if c == nil || (c.Text == "" && c.Parts == nil) {
+	if c == nil || (c.Text == "" && c.Parts == nil && c.Cache == nil) {
 		return json.Marshal(nil)
 	}
 	if c.Text != "" {
 		return json.Marshal(c.Text)
+	}
+	if c.Cache != nil {
+		var cacheOptionsBuilder strings.Builder
+		cacheOptionsBuilder.WriteString("cache_id=")
+		cacheOptionsBuilder.WriteString(c.Cache.CacheID)
+		if resetTTL := c.Cache.ResetTTL; resetTTL > 0 {
+			cacheOptionsBuilder.WriteString(";")
+			cacheOptionsBuilder.WriteString("reset_ttl=")
+			cacheOptionsBuilder.WriteString(strconv.Itoa(resetTTL))
+		}
+		return json.Marshal(cacheOptionsBuilder.String())
 	}
 	return json.Marshal(c.Parts)
 }
@@ -316,6 +328,11 @@ type File struct {
 	Purpose       string `json:"purpose"`
 	Status        string `json:"status"`
 	StatusDetails string `json:"status_details"`
+}
+
+type Files struct {
+	Data   []*File `json:"data"`
+	Object string  `json:"object"`
 }
 
 type ContextMessages []*Message

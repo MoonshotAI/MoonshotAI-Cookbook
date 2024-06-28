@@ -79,6 +79,14 @@ type Client[C Caller] interface {
 	// Authorization: Bearer {{ $.Client.Key }}
 	UploadFile(ctx context.Context, request *UploadFileRequest) (*File, error)
 
+	// ListFiles GET {{ $.Client.BaseUrl }}/files
+	// Authorization: Bearer {{ $.Client.Key }}
+	ListFiles(ctx context.Context) (*Files, error)
+
+	// DeleteFile DELETE {{ $.Client.BaseUrl }}/files/{{ $.fileID }}
+	// Authorization: Bearer {{ $.Client.Key }}
+	DeleteFile(ctx context.Context, fileID string) error
+
 	// RetrieveFileContent GET {{ $.Client.BaseUrl }}/files/{{ $.fileID }}/content
 	// Authorization: Bearer {{ $.Client.Key }}
 	RetrieveFileContent(ctx context.Context, fileID string) ([]byte, error)
