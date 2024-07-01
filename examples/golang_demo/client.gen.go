@@ -26,6 +26,8 @@ const (
 	CallerRetrieveContextCache       = "RetrieveContextCache"
 	CallerDeleteContextCache         = "DeleteContextCache"
 	CallerUploadFile                 = "UploadFile"
+	CallerListFiles                  = "ListFiles"
+	CallerDeleteFile                 = "DeleteFile"
 	CallerRetrieveFileContent        = "RetrieveFileContent"
 )
 
@@ -56,6 +58,10 @@ var (
 	headerTmplDeleteContextCache         = template.Must(template.New("HeaderDeleteContextCache").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
 	addrTmplUploadFile                   = template.Must(template.New("AddressUploadFile").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/files"))
 	headerTmplUploadFile                 = template.Must(template.New("HeaderUploadFile").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: {{ $.request.ContentType }}\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
+	addrTmplListFiles                    = template.Must(template.New("AddressListFiles").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/files"))
+	headerTmplListFiles                  = template.Must(template.New("HeaderListFiles").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
+	addrTmplDeleteFile                   = template.Must(template.New("AddressDeleteFile").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/files/{{ $.fileID }}"))
+	headerTmplDeleteFile                 = template.Must(template.New("HeaderDeleteFile").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
 	addrTmplRetrieveFileContent          = template.Must(template.New("AddressRetrieveFileContent").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/files/{{ $.fileID }}/content"))
 	headerTmplRetrieveFileContent        = template.Must(template.New("HeaderRetrieveFileContent").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Authorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
 )
@@ -888,6 +894,185 @@ func (__imp *implClient[C]) UploadFile(ctx context.Context, request *UploadFileR
 	}
 
 	return v0UploadFile, nil
+}
+
+func (__imp *implClient[C]) ListFiles(ctx context.Context) (*Files, error) {
+	var innerListFiles any = __imp.Inner()
+
+	addrListFiles := __ClientGetBuffer()
+	defer __ClientPutBuffer(addrListFiles)
+	defer addrListFiles.Reset()
+
+	headerListFiles := __ClientGetBuffer()
+	defer __ClientPutBuffer(headerListFiles)
+	defer headerListFiles.Reset()
+
+	var (
+		v0ListFiles           = new(Files)
+		errListFiles          error
+		httpResponseListFiles *http.Response
+		responseListFiles     ClientResponseInterface = __imp.response()
+	)
+
+	if errListFiles = addrTmplListFiles.Execute(addrListFiles, map[string]any{
+		"Client": __imp.Inner(),
+		"ctx":    ctx,
+	}); errListFiles != nil {
+		return v0ListFiles, fmt.Errorf("error building 'ListFiles' url: %w", errListFiles)
+	}
+
+	if errListFiles = headerTmplListFiles.Execute(headerListFiles, map[string]any{
+		"Client": __imp.Inner(),
+		"ctx":    ctx,
+	}); errListFiles != nil {
+		return v0ListFiles, fmt.Errorf("error building 'ListFiles' header: %w", errListFiles)
+	}
+	bufReaderListFiles := bufio.NewReader(headerListFiles)
+	mimeHeaderListFiles, errListFiles := textproto.NewReader(bufReaderListFiles).ReadMIMEHeader()
+	if errListFiles != nil {
+		return v0ListFiles, fmt.Errorf("error reading 'ListFiles' header: %w", errListFiles)
+	}
+
+	urlListFiles := addrListFiles.String()
+	requestListFiles, errListFiles := http.NewRequestWithContext(ctx, "GET", urlListFiles, http.NoBody)
+	if errListFiles != nil {
+		return v0ListFiles, fmt.Errorf("error building 'ListFiles' request: %w", errListFiles)
+	}
+
+	for kListFiles, vvListFiles := range mimeHeaderListFiles {
+		for _, vListFiles := range vvListFiles {
+			requestListFiles.Header.Add(kListFiles, vListFiles)
+		}
+	}
+
+	startListFiles := time.Now()
+
+	if httpClientListFiles, okListFiles := innerListFiles.(interface{ Client() *http.Client }); okListFiles {
+		httpResponseListFiles, errListFiles = httpClientListFiles.Client().Do(requestListFiles)
+	} else {
+		httpResponseListFiles, errListFiles = http.DefaultClient.Do(requestListFiles)
+	}
+
+	if logListFiles, okListFiles := innerListFiles.(interface {
+		Log(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration)
+	}); okListFiles {
+		logListFiles.Log(ctx, "ListFiles", requestListFiles, httpResponseListFiles, time.Since(startListFiles))
+	}
+
+	if errListFiles != nil {
+		return v0ListFiles, fmt.Errorf("error sending 'ListFiles' request: %w", errListFiles)
+	}
+
+	if httpResponseListFiles.StatusCode < 200 || httpResponseListFiles.StatusCode > 299 {
+		return v0ListFiles, __ClientNewResponseError("ListFiles", httpResponseListFiles)
+	}
+
+	if errListFiles = responseListFiles.FromResponse("ListFiles", httpResponseListFiles); errListFiles != nil {
+		return v0ListFiles, fmt.Errorf("error converting 'ListFiles' response: %w", errListFiles)
+	}
+
+	addrListFiles.Reset()
+	headerListFiles.Reset()
+
+	if errListFiles = responseListFiles.Err(); errListFiles != nil {
+		return v0ListFiles, fmt.Errorf("error returned from 'ListFiles' response: %w", errListFiles)
+	}
+
+	if errListFiles = responseListFiles.ScanValues(v0ListFiles); errListFiles != nil {
+		return v0ListFiles, fmt.Errorf("error scanning value from 'ListFiles' response: %w", errListFiles)
+	}
+
+	return v0ListFiles, nil
+}
+
+func (__imp *implClient[C]) DeleteFile(ctx context.Context, fileID string) error {
+	var innerDeleteFile any = __imp.Inner()
+
+	addrDeleteFile := __ClientGetBuffer()
+	defer __ClientPutBuffer(addrDeleteFile)
+	defer addrDeleteFile.Reset()
+
+	headerDeleteFile := __ClientGetBuffer()
+	defer __ClientPutBuffer(headerDeleteFile)
+	defer headerDeleteFile.Reset()
+
+	var (
+		errDeleteFile          error
+		httpResponseDeleteFile *http.Response
+		responseDeleteFile     ClientResponseInterface = __imp.response()
+	)
+
+	if errDeleteFile = addrTmplDeleteFile.Execute(addrDeleteFile, map[string]any{
+		"Client": __imp.Inner(),
+		"ctx":    ctx,
+		"fileID": fileID,
+	}); errDeleteFile != nil {
+		return fmt.Errorf("error building 'DeleteFile' url: %w", errDeleteFile)
+	}
+
+	if errDeleteFile = headerTmplDeleteFile.Execute(headerDeleteFile, map[string]any{
+		"Client": __imp.Inner(),
+		"ctx":    ctx,
+		"fileID": fileID,
+	}); errDeleteFile != nil {
+		return fmt.Errorf("error building 'DeleteFile' header: %w", errDeleteFile)
+	}
+	bufReaderDeleteFile := bufio.NewReader(headerDeleteFile)
+	mimeHeaderDeleteFile, errDeleteFile := textproto.NewReader(bufReaderDeleteFile).ReadMIMEHeader()
+	if errDeleteFile != nil {
+		return fmt.Errorf("error reading 'DeleteFile' header: %w", errDeleteFile)
+	}
+
+	urlDeleteFile := addrDeleteFile.String()
+	requestDeleteFile, errDeleteFile := http.NewRequestWithContext(ctx, "DELETE", urlDeleteFile, http.NoBody)
+	if errDeleteFile != nil {
+		return fmt.Errorf("error building 'DeleteFile' request: %w", errDeleteFile)
+	}
+
+	for kDeleteFile, vvDeleteFile := range mimeHeaderDeleteFile {
+		for _, vDeleteFile := range vvDeleteFile {
+			requestDeleteFile.Header.Add(kDeleteFile, vDeleteFile)
+		}
+	}
+
+	startDeleteFile := time.Now()
+
+	if httpClientDeleteFile, okDeleteFile := innerDeleteFile.(interface{ Client() *http.Client }); okDeleteFile {
+		httpResponseDeleteFile, errDeleteFile = httpClientDeleteFile.Client().Do(requestDeleteFile)
+	} else {
+		httpResponseDeleteFile, errDeleteFile = http.DefaultClient.Do(requestDeleteFile)
+	}
+
+	if logDeleteFile, okDeleteFile := innerDeleteFile.(interface {
+		Log(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration)
+	}); okDeleteFile {
+		logDeleteFile.Log(ctx, "DeleteFile", requestDeleteFile, httpResponseDeleteFile, time.Since(startDeleteFile))
+	}
+
+	if errDeleteFile != nil {
+		return fmt.Errorf("error sending 'DeleteFile' request: %w", errDeleteFile)
+	}
+
+	if httpResponseDeleteFile.StatusCode < 200 || httpResponseDeleteFile.StatusCode > 299 {
+		return __ClientNewResponseError("DeleteFile", httpResponseDeleteFile)
+	}
+
+	if errDeleteFile = responseDeleteFile.FromResponse("DeleteFile", httpResponseDeleteFile); errDeleteFile != nil {
+		return fmt.Errorf("error converting 'DeleteFile' response: %w", errDeleteFile)
+	}
+
+	addrDeleteFile.Reset()
+	headerDeleteFile.Reset()
+
+	if errDeleteFile = responseDeleteFile.Err(); errDeleteFile != nil {
+		return fmt.Errorf("error returned from 'DeleteFile' response: %w", errDeleteFile)
+	}
+
+	if errDeleteFile = responseDeleteFile.ScanValues(); errDeleteFile != nil {
+		return fmt.Errorf("error scanning value from 'DeleteFile' response: %w", errDeleteFile)
+	}
+
+	return nil
 }
 
 func (__imp *implClient[C]) RetrieveFileContent(ctx context.Context, fileID string) ([]byte, error) {
