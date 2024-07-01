@@ -9,7 +9,7 @@ client = OpenAI(
 )
 
 def deleteCacheItem(id):
-    res = requests.deleteCacheItem(
+    res = requests.delete(
         url = f"https://api.moonshot.cn/v1/caching/{id}",
         headers = {
             "Authorization": "Bearer $MOONSHOT_API_KEY"
