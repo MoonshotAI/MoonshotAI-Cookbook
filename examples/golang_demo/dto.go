@@ -358,6 +358,11 @@ type ContextCache struct {
 	Messages ContextMessages `json:"messages" db:"cache_messages"`
 }
 
+type ContextCacheTag struct {
+	Tag     string `json:"tag"`
+	CacheID string `json:"cache_id"`
+}
+
 type ToolChoice string
 
 func (t ToolChoice) MarshalJSON() ([]byte, error) {
