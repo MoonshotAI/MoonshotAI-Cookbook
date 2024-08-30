@@ -25,6 +25,7 @@ const (
 	CallerCreateContextCache         = "CreateContextCache"
 	CallerRetrieveContextCache       = "RetrieveContextCache"
 	CallerDeleteContextCache         = "DeleteContextCache"
+	CallerRetrieveContextCacheTag    = "RetrieveContextCacheTag"
 	CallerUploadFile                 = "UploadFile"
 	CallerListFiles                  = "ListFiles"
 	CallerDeleteFile                 = "DeleteFile"
@@ -56,6 +57,8 @@ var (
 	headerTmplRetrieveContextCache       = template.Must(template.New("HeaderRetrieveContextCache").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
 	addrTmplDeleteContextCache           = template.Must(template.New("AddressDeleteContextCache").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/caching/{{ $.cacheID }}"))
 	headerTmplDeleteContextCache         = template.Must(template.New("HeaderDeleteContextCache").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
+	addrTmplRetrieveContextCacheTag      = template.Must(template.New("AddressRetrieveContextCacheTag").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/caching/refs/tags/{{ $.tag }}"))
+	headerTmplRetrieveContextCacheTag    = template.Must(template.New("HeaderRetrieveContextCacheTag").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: application/json\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
 	addrTmplUploadFile                   = template.Must(template.New("AddressUploadFile").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/files"))
 	headerTmplUploadFile                 = template.Must(template.New("HeaderUploadFile").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("Content-Type: {{ $.request.ContentType }}\r\nAuthorization: Bearer {{ $.Client.Key }}\r\n\r\n"))
 	addrTmplListFiles                    = template.Must(template.New("AddressListFiles").Funcs(template.FuncMap{"get_cache_options": getCacheOptions}).Parse("{{ $.Client.BaseUrl }}/files"))
@@ -803,6 +806,97 @@ func (__imp *implClient[C]) DeleteContextCache(ctx context.Context, cacheID stri
 	}
 
 	return nil
+}
+
+func (__imp *implClient[C]) RetrieveContextCacheTag(ctx context.Context, tag string) (*ContextCacheTag, error) {
+	var innerRetrieveContextCacheTag any = __imp.Inner()
+
+	addrRetrieveContextCacheTag := __ClientGetBuffer()
+	defer __ClientPutBuffer(addrRetrieveContextCacheTag)
+	defer addrRetrieveContextCacheTag.Reset()
+
+	headerRetrieveContextCacheTag := __ClientGetBuffer()
+	defer __ClientPutBuffer(headerRetrieveContextCacheTag)
+	defer headerRetrieveContextCacheTag.Reset()
+
+	var (
+		v0RetrieveContextCacheTag           = new(ContextCacheTag)
+		errRetrieveContextCacheTag          error
+		httpResponseRetrieveContextCacheTag *http.Response
+		responseRetrieveContextCacheTag     ClientResponseInterface = __imp.response()
+	)
+
+	if errRetrieveContextCacheTag = addrTmplRetrieveContextCacheTag.Execute(addrRetrieveContextCacheTag, map[string]any{
+		"Client": __imp.Inner(),
+		"ctx":    ctx,
+		"tag":    tag,
+	}); errRetrieveContextCacheTag != nil {
+		return v0RetrieveContextCacheTag, fmt.Errorf("error building 'RetrieveContextCacheTag' url: %w", errRetrieveContextCacheTag)
+	}
+
+	if errRetrieveContextCacheTag = headerTmplRetrieveContextCacheTag.Execute(headerRetrieveContextCacheTag, map[string]any{
+		"Client": __imp.Inner(),
+		"ctx":    ctx,
+		"tag":    tag,
+	}); errRetrieveContextCacheTag != nil {
+		return v0RetrieveContextCacheTag, fmt.Errorf("error building 'RetrieveContextCacheTag' header: %w", errRetrieveContextCacheTag)
+	}
+	bufReaderRetrieveContextCacheTag := bufio.NewReader(headerRetrieveContextCacheTag)
+	mimeHeaderRetrieveContextCacheTag, errRetrieveContextCacheTag := textproto.NewReader(bufReaderRetrieveContextCacheTag).ReadMIMEHeader()
+	if errRetrieveContextCacheTag != nil {
+		return v0RetrieveContextCacheTag, fmt.Errorf("error reading 'RetrieveContextCacheTag' header: %w", errRetrieveContextCacheTag)
+	}
+
+	urlRetrieveContextCacheTag := addrRetrieveContextCacheTag.String()
+	requestRetrieveContextCacheTag, errRetrieveContextCacheTag := http.NewRequestWithContext(ctx, "GET", urlRetrieveContextCacheTag, http.NoBody)
+	if errRetrieveContextCacheTag != nil {
+		return v0RetrieveContextCacheTag, fmt.Errorf("error building 'RetrieveContextCacheTag' request: %w", errRetrieveContextCacheTag)
+	}
+
+	for kRetrieveContextCacheTag, vvRetrieveContextCacheTag := range mimeHeaderRetrieveContextCacheTag {
+		for _, vRetrieveContextCacheTag := range vvRetrieveContextCacheTag {
+			requestRetrieveContextCacheTag.Header.Add(kRetrieveContextCacheTag, vRetrieveContextCacheTag)
+		}
+	}
+
+	startRetrieveContextCacheTag := time.Now()
+
+	if httpClientRetrieveContextCacheTag, okRetrieveContextCacheTag := innerRetrieveContextCacheTag.(interface{ Client() *http.Client }); okRetrieveContextCacheTag {
+		httpResponseRetrieveContextCacheTag, errRetrieveContextCacheTag = httpClientRetrieveContextCacheTag.Client().Do(requestRetrieveContextCacheTag)
+	} else {
+		httpResponseRetrieveContextCacheTag, errRetrieveContextCacheTag = http.DefaultClient.Do(requestRetrieveContextCacheTag)
+	}
+
+	if logRetrieveContextCacheTag, okRetrieveContextCacheTag := innerRetrieveContextCacheTag.(interface {
+		Log(ctx context.Context, caller string, request *http.Request, response *http.Response, elapse time.Duration)
+	}); okRetrieveContextCacheTag {
+		logRetrieveContextCacheTag.Log(ctx, "RetrieveContextCacheTag", requestRetrieveContextCacheTag, httpResponseRetrieveContextCacheTag, time.Since(startRetrieveContextCacheTag))
+	}
+
+	if errRetrieveContextCacheTag != nil {
+		return v0RetrieveContextCacheTag, fmt.Errorf("error sending 'RetrieveContextCacheTag' request: %w", errRetrieveContextCacheTag)
+	}
+
+	if httpResponseRetrieveContextCacheTag.StatusCode < 200 || httpResponseRetrieveContextCacheTag.StatusCode > 299 {
+		return v0RetrieveContextCacheTag, __ClientNewResponseError("RetrieveContextCacheTag", httpResponseRetrieveContextCacheTag)
+	}
+
+	if errRetrieveContextCacheTag = responseRetrieveContextCacheTag.FromResponse("RetrieveContextCacheTag", httpResponseRetrieveContextCacheTag); errRetrieveContextCacheTag != nil {
+		return v0RetrieveContextCacheTag, fmt.Errorf("error converting 'RetrieveContextCacheTag' response: %w", errRetrieveContextCacheTag)
+	}
+
+	addrRetrieveContextCacheTag.Reset()
+	headerRetrieveContextCacheTag.Reset()
+
+	if errRetrieveContextCacheTag = responseRetrieveContextCacheTag.Err(); errRetrieveContextCacheTag != nil {
+		return v0RetrieveContextCacheTag, fmt.Errorf("error returned from 'RetrieveContextCacheTag' response: %w", errRetrieveContextCacheTag)
+	}
+
+	if errRetrieveContextCacheTag = responseRetrieveContextCacheTag.ScanValues(v0RetrieveContextCacheTag); errRetrieveContextCacheTag != nil {
+		return v0RetrieveContextCacheTag, fmt.Errorf("error scanning value from 'RetrieveContextCacheTag' response: %w", errRetrieveContextCacheTag)
+	}
+
+	return v0RetrieveContextCacheTag, nil
 }
 
 func (__imp *implClient[C]) UploadFile(ctx context.Context, request *UploadFileRequest) (*File, error) {

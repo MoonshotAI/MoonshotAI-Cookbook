@@ -74,6 +74,11 @@ type Client[C Caller] interface {
 	// Authorization: Bearer {{ $.Client.Key }}
 	DeleteContextCache(ctx context.Context, cacheID string) error
 
+	// RetrieveContextCacheTag GET {{ $.Client.BaseUrl }}/caching/refs/tags/{{ $.tag }}
+	// Content-Type: application/json
+	// Authorization: Bearer {{ $.Client.Key }}
+	RetrieveContextCacheTag(ctx context.Context, tag string) (*ContextCacheTag, error)
+
 	// UploadFile POST {{ $.Client.BaseUrl }}/files
 	// Content-Type: {{ $.request.ContentType }}
 	// Authorization: Bearer {{ $.Client.Key }}
