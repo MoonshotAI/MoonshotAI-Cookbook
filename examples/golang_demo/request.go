@@ -65,6 +65,7 @@ type CreateContextCacheRequest struct {
 	Metadata    map[string]string `json:"metadata,omitempty"`
 	ExpiredAt   int               `json:"expiredAt,omitempty"`
 	TTL         int               `json:"ttl,omitempty"`
+	Tags        []string          `json:"tags,omitempty"`
 }
 
 func (r *CreateContextCacheRequest) ToJSON() (string, error) {

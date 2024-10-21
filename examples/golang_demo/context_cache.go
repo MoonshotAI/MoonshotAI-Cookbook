@@ -84,10 +84,19 @@ func initKnowledge(
 				Content: &Content{Text: string(fileContent)},
 			})
 		}
+		var cacheTag *ContextCacheTag
+		cacheTag, err = client.RetrieveContextCacheTag(ctx, knowledgeKey)
+		if err != nil {
+			return nil, "", err
+		}
+		if err = client.DeleteContextCache(ctx, cacheTag.CacheID); err != nil {
+			return nil, "", err
+		}
 		cache, err = client.CreateContextCache(ctx, &CreateContextCacheRequest{
 			Messages: messages,
 			Model:    "moonshot-v1",
 			TTL:      3600,
+			Tags:     []string{knowledgeKey},
 		})
 		if err != nil {
 			return nil, "", err
