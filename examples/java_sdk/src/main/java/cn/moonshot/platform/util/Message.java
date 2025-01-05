@@ -1,9 +1,8 @@
 package cn.moonshot.platform.util;
 
-import cn.hutool.core.lang.Assert;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
