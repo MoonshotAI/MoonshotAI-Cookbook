@@ -1,15 +1,13 @@
 package cn.moonshot.examples;
 
-import com.google.gson.annotations.SerializedName;
 import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
 
 enum ChatMessageRole {
     SYSTEM, USER, ASSISTANT;
